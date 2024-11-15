@@ -152,7 +152,7 @@ fn determine_output_file_name(args: &Args, output_format: Format) -> PathBuf {
     )
 }
 
-fn do_convert(args: Args) -> Result<(), Box<dyn Error>> {
+fn do_convert_gltf_to_vmesh(args: Args) -> Result<(), Box<dyn Error>> {
     if args.verbose >= 1 {
         println!("Importing GLTF file: {}", args.input_file.display());
     }
@@ -163,6 +163,58 @@ fn do_convert(args: Args) -> Result<(), Box<dyn Error>> {
     if args.verbose >= 2 {
         println!("Importing GLTF buffers");
     }
+
+    let buffers = gltf::import_buffers(&document, input_path.parent(), blob)?;
+    let skin_opt = document.skins().next();
+    let is_character = skin_opt.is_some();
+
+    let output_format = determine_output_format(&args, is_character);
+    let output_file_name = determine_output_file_name(&args, output_format);
+    let output_dir = output_file_name.parent().unwrap().to_owned();
+
+    if args.verbose >= 1 {
+        println!("Exporting mesh: {}", output_file_name.display());
+    }
+    let ctx = Context {
+        buffers,
+        is_character,
+        args,
+        output_dir,
+    };
+    if output_format == Format::Rfg {
+        let rfg = rfg_convert::convert_gltf_to_rfg(&document, &ctx)?;
+        let file = File::create(output_file_name)?;
+        let mut wrt = BufWriter::new(file);
+        rfg.write(&mut wrt)?;
+    } else {
+        let v3m = v3mc_convert::convert_gltf_to_v3mc(&document, &ctx)?;
+        let file = File::create(output_file_name)?;
+        let mut wrt = BufWriter::new(file);
+        v3m.write(&mut wrt)?;
+
+        if let Some(skin) = skin_opt {
+            for (i, anim) in document.animations().enumerate() {
+                char_anim::convert_animation_to_rfa(&anim, i, &skin, &ctx)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+
+fn do_convert_v3c_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
+    if args.verbose >= 1 {
+        println!("Importing GLTF file: {}", args.input_file.display());
+    }
+    let input_path = Path::new(&args.input_file);
+    let gltf = gltf::Gltf::open(input_path)?;
+    let gltf::Gltf { document, blob } = gltf;
+
+    if args.verbose >= 2 {
+        println!("Importing GLTF buffers");
+    }
+
     let buffers = gltf::import_buffers(&document, input_path.parent(), blob)?;
     let skin_opt = document.skins().next();
     let is_character = skin_opt.is_some();
@@ -204,7 +256,7 @@ fn do_convert(args: Args) -> Result<(), Box<dyn Error>> {
 #[derive(Parser, Debug)]
 #[clap(author, version, about, about = "GLTF to V3M/V3C/RFG converter")]
 pub struct Args {
-    /// Input GLTF filename
+    /// Input GLTF or V3C filename
     input_file: PathBuf,
 
     /// Output filename
@@ -235,13 +287,25 @@ pub struct Args {
 }
 
 fn main() {
-    let args = Args::parse();
+    let mut args = Args::parse();
+
+    args.verbose=2;
+
+    let path = std::env::current_dir().unwrap();
+    println!("The current directory is {}", path.display());
 
     if args.verbose >= 1 {
         println!("vmesh {}", env!("CARGO_PKG_VERSION"));
     }
 
-    if let Err(e) = do_convert(args) {
+    let input_file_path = args.input_file.as_path();
+    let extension = input_file_path.extension();
+    match extension {
+        Some(extension)=>println!("input_file_extension: {}", extension.to_str().unwrap()),
+        None => println!("No file extension")
+    }
+
+    if let Err(e) = do_convert_gltf_to_vmesh(args) {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
