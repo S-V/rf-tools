@@ -17,6 +17,7 @@ use std::env;
 use std::error::Error;
 use std::f32;
 use std::ffi::OsStr;
+use std::fs;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
@@ -205,51 +206,18 @@ fn do_convert_gltf_to_vmesh(args: Args) -> Result<(), Box<dyn Error>> {
 
 fn do_convert_v3c_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
     if args.verbose >= 1 {
-        println!("Importing GLTF file: {}", args.input_file.display());
-    }
-    let input_path = Path::new(&args.input_file);
-    let gltf = gltf::Gltf::open(input_path)?;
-    let gltf::Gltf { document, blob } = gltf;
-
-    if args.verbose >= 2 {
-        println!("Importing GLTF buffers");
+        println!("Importing V3C file: {}", args.input_file.display());
     }
 
-    let buffers = gltf::import_buffers(&document, input_path.parent(), blob)?;
-    let skin_opt = document.skins().next();
-    let is_character = skin_opt.is_some();
+    let input_v3c_path = 
+         //Path::new(&args.input_file) 
+         Path::new("R:/rf-tools/bat1.v3c")
+        ;
 
-    let output_format = determine_output_format(&args, is_character);
-    let output_file_name = determine_output_file_name(&args, output_format);
-    let output_dir = output_file_name.parent().unwrap().to_owned();
+    let v3c_contents: Vec<u8> = fs::read(input_v3c_path)?;
+    println!("Size: {}",v3c_contents.len());
 
-    if args.verbose >= 1 {
-        println!("Exporting mesh: {}", output_file_name.display());
-    }
-    let ctx = Context {
-        buffers,
-        is_character,
-        args,
-        output_dir,
-    };
-    if output_format == Format::Rfg {
-        let rfg = rfg_convert::convert_gltf_to_rfg(&document, &ctx)?;
-        let file = File::create(output_file_name)?;
-        let mut wrt = BufWriter::new(file);
-        rfg.write(&mut wrt)?;
-    } else {
-        let v3m = v3mc_convert::convert_gltf_to_v3mc(&document, &ctx)?;
-        let file = File::create(output_file_name)?;
-        let mut wrt = BufWriter::new(file);
-        v3m.write(&mut wrt)?;
-
-        if let Some(skin) = skin_opt {
-            for (i, anim) in document.animations().enumerate() {
-                char_anim::convert_animation_to_rfa(&anim, i, &skin, &ctx)?;
-            }
-        }
-    }
-
+    //
     Ok(())
 }
 
@@ -299,9 +267,20 @@ fn main() {
     }
 
     let input_file_path = args.input_file.as_path();
-    let extension = input_file_path.extension();
+    let extension = input_file_path.extension().map(|p| p.to_str()).flatten();
     match extension {
-        Some(extension)=>println!("input_file_extension: {}", extension.to_str().unwrap()),
+        Some(extension)=>{
+            println!("input_file_extension: {}", extension);
+            if extension=="v3c"{
+                println!("V3C!!!");
+                if let Err(e) = do_convert_v3c_to_gltf(args) {
+                    eprintln!("Error: {}", e);
+                    std::process::exit(1);
+                }
+
+                return;
+            }
+        },
         None => println!("No file extension")
     }
 
