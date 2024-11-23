@@ -13,12 +13,14 @@ use clap::Parser;
 use clap::ValueEnum;
 use gltf::Buffer;
 use math_utils::{Matrix3, Matrix4, Vector3};
+use v3mc::FileHeader;
 use std::env;
 use std::error::Error;
 use std::f32;
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::File;
+use std::io::Cursor;
 use std::io::BufWriter;
 use std::path::Path;
 use std::path::PathBuf;
@@ -217,6 +219,10 @@ fn do_convert_v3c_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
     let v3c_contents: Vec<u8> = fs::read(input_v3c_path)?;
     println!("Size: {}",v3c_contents.len());
 
+    //let buf_reader=BufReader::new(v3c_contents);
+    let mut v3c_reader = Cursor::new(v3c_contents);
+    let v3c_file_header = FileHeader::read(v3c_reader)?;
+    println!("signature: {}",v3c_file_header.signature);
     //
     Ok(())
 }

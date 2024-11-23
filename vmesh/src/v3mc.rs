@@ -1,7 +1,7 @@
 use crate::io_utils::WriteExt;
-use byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use std::convert::TryInto;
-use std::io::{Result, Seek, SeekFrom, Write};
+use std::io::{Result, Seek, SeekFrom, Write, Read};
 
 // File signatures
 pub const V3M_SIGNATURE: u32 = 0x5246_3344; // RF3D
@@ -98,6 +98,20 @@ impl FileHeader {
         wrt.write_i32::<LittleEndian>(self.num_dumbs)?;
         wrt.write_i32::<LittleEndian>(self.num_cspheres)?;
         Ok(())
+    }
+    pub fn read<R: Read>(mut reader: R) -> Result<Self> {
+        Ok(FileHeader {
+            signature: reader.read_u32::<LittleEndian>()?,
+            version: reader.read_u32::<LittleEndian>()?,
+            num_lod_meshes: reader.read_i32::<LittleEndian>()?,
+            num_all_vertices: reader.read_i32::<LittleEndian>()?,
+            num_all_faces: reader.read_i32::<LittleEndian>()?,
+            num_all_vertex_normals: reader.read_i32::<LittleEndian>()?,
+            num_all_materials: reader.read_i32::<LittleEndian>()?,
+            num_all_meshes: reader.read_i32::<LittleEndian>()?,
+            num_dumbs: reader.read_i32::<LittleEndian>()?,
+            num_cspheres: reader.read_i32::<LittleEndian>()?,
+        })
     }
 }
 
