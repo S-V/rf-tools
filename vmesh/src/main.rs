@@ -7,20 +7,18 @@ mod rfg;
 mod rfg_convert;
 mod v3mc;
 mod v3mc_convert;
+mod gltf_export;
 
 use clap::ArgAction;
 use clap::Parser;
 use clap::ValueEnum;
 use gltf::Buffer;
 use math_utils::{Matrix3, Matrix4, Vector3};
-use v3mc::FileHeader;
 use std::env;
 use std::error::Error;
 use std::f32;
 use std::ffi::OsStr;
-use std::fs;
 use std::fs::File;
-use std::io::Cursor;
 use std::io::BufWriter;
 use std::path::Path;
 use std::path::PathBuf;
@@ -206,23 +204,17 @@ fn do_convert_gltf_to_vmesh(args: Args) -> Result<(), Box<dyn Error>> {
 }
 
 
-fn do_convert_v3c_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
+fn do_convert_vmesh_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
     if args.verbose >= 1 {
         println!("Importing V3C file: {}", args.input_file.display());
     }
 
     let input_v3c_path = 
          //Path::new(&args.input_file) 
-         Path::new("R:/rf-tools/bat1.v3c")
+         Path::new("R:/rf-tools/vmesh/test-data/bat1.v3c")
         ;
 
-    let v3c_contents: Vec<u8> = fs::read(input_v3c_path)?;
-    println!("Size: {}",v3c_contents.len());
-
-    //let buf_reader=BufReader::new(v3c_contents);
-    let mut v3c_reader = Cursor::new(v3c_contents);
-    let v3c_file_header = FileHeader::read(v3c_reader)?;
-    println!("signature: {}",v3c_file_header.signature);
+    gltf_export::parse_vmesh(input_v3c_path);
     //
     Ok(())
 }
@@ -279,7 +271,7 @@ fn main() {
             println!("input_file_extension: {}", extension);
             if extension=="v3c"{
                 println!("V3C!!!");
-                if let Err(e) = do_convert_v3c_to_gltf(args) {
+                if let Err(e) = do_convert_vmesh_to_gltf(args) {
                     eprintln!("Error: {}", e);
                     std::process::exit(1);
                 }
