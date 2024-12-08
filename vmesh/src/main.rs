@@ -214,7 +214,7 @@ fn do_convert_vmesh_to_gltf(args: Args) -> Result<(), Box<dyn Error>> {
          Path::new("R:/rf-tools/vmesh/test-data/bat1.v3c")
         ;
 
-    gltf_export::parse_vmesh(input_v3c_path);
+    gltf_export::parse_vmesh(input_v3c_path)?;
     //
     Ok(())
 }

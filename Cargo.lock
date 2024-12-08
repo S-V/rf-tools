@@ -107,7 +107,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "173901312e9850391d4d7c1318c4e099fdc037d61870fca427429830efdb4e5f"
 dependencies = [
  "array-init",
- "binrw_derive",
+ "binrw_derive 0.13.3",
+ "bytemuck",
+]
+
+[[package]]
+name = "binrw"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d4bca59c20d6f40c2cc0802afbe1e788b89096f61bdf7aeea6bf00f10c2909b"
+dependencies = [
+ "array-init",
+ "binrw_derive 0.14.1",
  "bytemuck",
 ]
 
@@ -116,6 +127,19 @@ name = "binrw_derive"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb515fdd6f8d3a357c8e19b8ec59ef53880807864329b1cb1cba5c53bf76557e"
+dependencies = [
+ "either",
+ "owo-colors",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "binrw_derive"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8ba42866ce5bced2645bfa15e97eef2c62d2bdb530510538de8dd3d04efff3c"
 dependencies = [
  "either",
  "owo-colors",
@@ -743,7 +767,7 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 name = "vbm-exporter"
 version = "0.1.0"
 dependencies = [
- "binrw",
+ "binrw 0.13.3",
  "byteorder",
  "clap",
 ]
@@ -752,7 +776,7 @@ dependencies = [
 name = "vf-exporter"
 version = "0.1.0"
 dependencies = [
- "binrw",
+ "binrw 0.13.3",
  "byteorder",
  "clap",
 ]
@@ -761,6 +785,7 @@ dependencies = [
 name = "vmesh"
 version = "0.4.0"
 dependencies = [
+ "binrw 0.14.1",
  "byteorder",
  "clap",
  "glam",

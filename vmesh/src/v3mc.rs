@@ -2,6 +2,9 @@ use crate::io_utils::WriteExt;
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use std::convert::TryInto;
 use std::io::{Result, Seek, SeekFrom, Write, Read};
+use binrw::{
+    binread, BinWrite // trait for writing
+};
 
 // File signatures
 pub const V3M_SIGNATURE: u32 = 0x5246_3344; // RF3D
@@ -71,7 +74,8 @@ impl File {
     }
 }
 
-#[derive(Default)]
+#[binread]
+#[derive(Default, Debug)]
 pub struct FileHeader {
     pub signature: u32,
     pub version: u32,
